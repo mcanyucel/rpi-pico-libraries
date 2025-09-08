@@ -4,7 +4,7 @@ set(LIB_NAME ssd1306)
 
 add_library(${LIB_NAME} INTERFACE)
 target_sources(${LIB_NAME} INTERFACE
-    ${CMAKE_CURRENT_LIST_DIR}/ssd1306.c
+    ${CMAKE_CURRENT_LIST_DIR}/ssd1306_i2c.c
 )
 
 target_include_directories(${LIB_NAME} INTERFACE
