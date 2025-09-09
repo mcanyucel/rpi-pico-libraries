@@ -4,7 +4,7 @@ set(LIB_NAME sdcard)
 
 add_library(${LIB_NAME} INTERFACE)
 target_sources(${LIB_NAME} INTERFACE
-    ${CMAKE_CURRENT_LIST_DIR}/sdcard.c
+    ${CMAKE_CURRENT_LIST_DIR}/hw_config.c
 )
 
 target_include_directories(${LIB_NAME} INTERFACE
@@ -13,6 +13,6 @@ target_include_directories(${LIB_NAME} INTERFACE
 
 target_link_libraries(${LIB_NAME} INTERFACE
     pico_stdlib     # Pulls in commonly used features
-    hardware_i2c    # I2C support
+    hardware_spi    # SPI support
     hardware_gpio   # GPIO support
 )
