@@ -20,25 +20,36 @@
 #include "ssd1306_i2c.h"
 
 
+ssd1306_i2c_config_t ssd1306_i2c_create_config(uint8_t sda_pin, uint8_t scl_pin, i2c_inst_t *i2c_port) {
+    ssd1306_i2c_config_t config = {
+        .i2c_port = i2c_port,
+        .i2c_address = 0x3C,
+        .sda_pin = sda_pin,
+        .scl_pin = scl_pin,
+        .baudrate = SSD1306_I2C_CLK * 1000
+    };
+    return config;
+}
+
 void calc_render_area_buflen(struct render_area *area) {
     // calculate how long the flattened buffer will be for a render area
     area->buflen = (area->end_col - area->start_col + 1) * (area->end_page - area->start_page + 1);
 }
 
-void SSD1306_send_cmd(uint8_t cmd) {
+void SSD1306_send_cmd(ssd1306_device_t *device, uint8_t cmd) {
     // I2C write process expects a control byte followed by data
     // this "data" can be a command or data to follow up a command
     // Co = 1, D/C = 0 => the driver expects a command
     uint8_t buf[2] = {0x80, cmd};
-    i2c_write_blocking(SSD1306_I2C_INSTANCE, SSD1306_I2C_ADDR, buf, 2, false);
+    i2c_write_blocking(device->config.i2c_port, device->config.i2c_address, buf, 2, false);
 }
 
-void SSD1306_send_cmd_list(uint8_t *buf, int num) {
+void SSD1306_send_cmd_list(ssd1306_device_t *device, uint8_t *buf, int num) {
     for (int i=0;i<num;i++)
-        SSD1306_send_cmd(buf[i]);
+        SSD1306_send_cmd(device, buf[i]);
 }
 
-void SSD1306_send_buf(uint8_t buf[], int buflen) {
+void SSD1306_send_buf(ssd1306_device_t *device, uint8_t buf[], int buflen) {
     // in horizontal addressing mode, the column address pointer auto-increments
     // and then wraps around to the next page, so we can send the entire frame
     // buffer in one go!
@@ -51,16 +62,37 @@ void SSD1306_send_buf(uint8_t buf[], int buflen) {
     temp_buf[0] = 0x40;
     memcpy(temp_buf+1, buf, buflen);
 
-    i2c_write_blocking(SSD1306_I2C_INSTANCE, SSD1306_I2C_ADDR, temp_buf, buflen + 1, false);
+    i2c_write_blocking(device->config.i2c_port, device->config.i2c_address, temp_buf, buflen + 1, false);
 
     free(temp_buf);
 }
 
-void SSD1306_init() {
+void SSD1306_init(ssd1306_device_t *device, const ssd1306_i2c_config_t *config) {
     // Some of these commands are not strictly necessary as the reset
     // process defaults to some of these but they are shown here
     // to demonstrate what the initialization sequence looks like
     // Some configuration values are recommended by the board manufacturer
+
+    if (!device || !config) {
+        printf("ERROR: Invalid device or config pointer\n");
+        return;
+    }
+
+    // Copy configuration to device
+    device->config = *config;
+    device->initialized = false;
+
+    // Initialize I2C
+    printf("Initializing I2C at %d kHz\n", device->config.baudrate / 1000);
+    i2c_init(device->config.i2c_port, device->config.baudrate);
+    gpio_set_function(device->config.sda_pin, GPIO_FUNC_I2C);
+    gpio_set_function(device->config.scl_pin, GPIO_FUNC_I2C);
+    gpio_pull_up(device->config.sda_pin);
+    gpio_pull_up(device->config.scl_pin);
+    printf("I2C pins configured:\n");
+    printf("  SDA: GP%d\n", device->config.sda_pin);
+    printf("  SCL: GP%d\n", device->config.scl_pin);
+    sleep_ms(100); // Wait for the display to power up
 
     uint8_t cmds[] = {
         SSD1306_SET_DISP,               // set display off
@@ -102,10 +134,12 @@ void SSD1306_init() {
         SSD1306_SET_DISP | 0x01, // turn display on
     };
 
-    SSD1306_send_cmd_list(cmds, count_of(cmds));
+    SSD1306_send_cmd_list(device, cmds, count_of(cmds));
+    device->initialized = true;
+    printf("SSD1306 initialized\n");
 }
 
-void SSD1306_scroll(bool on) {
+void SSD1306_scroll(ssd1306_device_t *device, bool on) {
     // configure horizontal scrolling
     uint8_t cmds[] = {
         SSD1306_SET_HORIZ_SCROLL | 0x00,
@@ -118,10 +152,10 @@ void SSD1306_scroll(bool on) {
         SSD1306_SET_SCROLL | (on ? 0x01 : 0) // Start/stop scrolling
     };
 
-    SSD1306_send_cmd_list(cmds, count_of(cmds));
+    SSD1306_send_cmd_list(device, cmds, count_of(cmds));
 }
 
-void render(uint8_t *buf, struct render_area *area) {
+void render(ssd1306_device_t *device, uint8_t *buf, struct render_area *area) {
     // update a portion of the display with a render area
     uint8_t cmds[] = {
         SSD1306_SET_COL_ADDR,
@@ -132,8 +166,8 @@ void render(uint8_t *buf, struct render_area *area) {
         area->end_page
     };
 
-    SSD1306_send_cmd_list(cmds, count_of(cmds));
-    SSD1306_send_buf(buf, area->buflen);
+    SSD1306_send_cmd_list(device, cmds, count_of(cmds));
+    SSD1306_send_buf(device, buf, area->buflen);
 }
 
 void SetPixel(uint8_t *buf, int x,int y, bool on) {
