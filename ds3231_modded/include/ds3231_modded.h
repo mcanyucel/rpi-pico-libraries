@@ -2,25 +2,23 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "hardware/i2c.h"
 
-// DS3231 Hardware-Modified I2C Configuration
-#define DS3231_MODDED_I2C_ADDRESS 0x68
 
-#ifndef DS3231_MODDED_I2C_PORT
-#define DS3231_MODDED_I2C_PORT i2c0
-#endif
+typedef struct {
+    i2c_inst_t *i2c_port;
+    uint8_t i2c_address;
+    uint8_t sda_pin;
+    uint8_t scl_pin;
+    uint8_t int_pin;
+    uint32_t baudrate;
+} ds3231_modded_config_t;
 
-#ifndef DS3231_MODDED_SDA_PIN
-#define DS3231_MODDED_SDA_PIN 0
-#endif
+typedef struct {
+    ds3231_modded_config_t config;
+    bool initialized;
+} ds3231_modded_t;
 
-#ifndef DS3231_MODDED_SCL_PIN
-#define DS3231_MODDED_SCL_PIN 1
-#endif
-
-#ifndef DS3231_MODDED_INT_PIN
-#define DS3231_MODDED_INT_PIN 5
-#endif
 
 // DS3231 Register Addresses (same as original)
 #define DS3231_MODDED_REG_SECONDS 0x00
@@ -65,45 +63,48 @@ typedef struct {
 uint8_t ds3231_modded_dec_to_bcd(uint8_t dec);
 uint8_t ds3231_modded_bcd_to_dec(uint8_t bcd);
 
+// Configuration helper
+ds3231_modded_config_t ds3231_modded_create_config(uint8_t sda_pin, uint8_t scl_pin, uint8_t int_pin, i2c_inst_t *i2c_port);
+
 // Low-level I2C Functions
-bool ds3231_modded_write_reg(uint8_t reg, uint8_t value);
-bool ds3231_modded_read_reg(uint8_t reg, uint8_t *value);
-bool ds3231_modded_read_regs(uint8_t start_reg, uint8_t *buffer, uint8_t count);
+bool ds3231_modded_write_reg(ds3231_modded_t *device, uint8_t reg, uint8_t value);
+bool ds3231_modded_read_reg(ds3231_modded_t *device, uint8_t reg, uint8_t *value);
+bool ds3231_modded_read_regs(ds3231_modded_t *device, uint8_t start_reg, uint8_t *buffer, uint8_t count);
 
 // Initialization
-bool ds3231_modded_init(void);
-bool ds3231_modded_is_present(void);
-void ds3231_modded_print_status(void);
+bool ds3231_modded_init(ds3231_modded_t *device, const ds3231_modded_config_t *config);
+bool ds3231_modded_is_present(ds3231_modded_t *device);
+void ds3231_modded_print_status(ds3231_modded_t *device);
 
 // Time Functions
-bool ds3231_modded_read_time(ds3231_modded_time_t *time);
-bool ds3231_modded_read_date(ds3231_modded_date_t *date);
-bool ds3231_modded_read_datetime(ds3231_modded_datetime_t *datetime);
-bool ds3231_modded_set_time(const ds3231_modded_time_t *time);
-bool ds3231_modded_set_date(const ds3231_modded_date_t *date);
-bool ds3231_modded_set_datetime(const ds3231_modded_datetime_t *datetime);
+bool ds3231_modded_read_time(ds3231_modded_t *device, ds3231_modded_time_t *time);
+bool ds3231_modded_read_date(ds3231_modded_t *device, ds3231_modded_date_t *date);
+bool ds3231_modded_read_datetime(ds3231_modded_t *device, ds3231_modded_datetime_t *datetime);
+bool ds3231_modded_set_time(ds3231_modded_t *device, const ds3231_modded_time_t *time);
+bool ds3231_modded_set_date(ds3231_modded_t *device, const ds3231_modded_date_t *date);
+bool ds3231_modded_set_datetime(ds3231_modded_t *device, const ds3231_modded_datetime_t *datetime);
 
 // Alarm Functions
-bool ds3231_modded_clear_alarm_flags(void);
-bool ds3231_modded_enable_alarm1_interrupt(void);
-bool ds3231_modded_disable_alarm1_interrupt(void);
-bool ds3231_modded_check_alarm1_triggered(void);
-bool ds3231_modded_set_alarm1_time(const ds3231_modded_time_t *alarm_time, bool ignore_day);
-bool ds3231_modded_set_alarm1_in_seconds(uint16_t seconds_from_now);
-bool ds3231_modded_set_alarm1_in_minutes(uint8_t minutes_from_now);
+bool ds3231_modded_clear_alarm_flags(ds3231_modded_t *device);
+bool ds3231_modded_enable_alarm1_interrupt(ds3231_modded_t *device);
+bool ds3231_modded_disable_alarm1_interrupt(ds3231_modded_t *device);
+bool ds3231_modded_check_alarm1_triggered(ds3231_modded_t *device);
+bool ds3231_modded_set_alarm1_time(ds3231_modded_t *device, const ds3231_modded_time_t *alarm_time, bool ignore_day);
+bool ds3231_modded_set_alarm1_in_seconds(ds3231_modded_t *device, uint16_t seconds_from_now);
+bool ds3231_modded_set_alarm1_in_minutes(ds3231_modded_t *device, uint8_t minutes_from_now);
 
 // Status Functions
-bool ds3231_modded_read_control_register(uint8_t *control);
-bool ds3231_modded_read_status_register(uint8_t *status);
+bool ds3231_modded_read_control_register(ds3231_modded_t *device, uint8_t *control);
+bool ds3231_modded_read_status_register(ds3231_modded_t *device, uint8_t *status);
 
 // Temperature
-bool ds3231_modded_read_temperature(float *temperature);
+bool ds3231_modded_read_temperature(ds3231_modded_t *device, float *temperature);
 
 // GPIO Helper for INT Pin (with software pull-up)
-bool ds3231_modded_init_interrupt_pin(void);
-bool ds3231_modded_read_interrupt_pin(void);
+bool ds3231_modded_init_interrupt_pin(ds3231_modded_t *device);
+bool ds3231_modded_read_interrupt_pin(ds3231_modded_t *device);
 
 // Hardware Mod Specific Functions
-bool ds3231_modded_verify_battery_operation(void);
-bool ds3231_modded_test_interrupt_functionality(void);
+bool ds3231_modded_verify_battery_operation(ds3231_modded_t *device);
+bool ds3231_modded_test_interrupt_functionality(ds3231_modded_t *device);
 void ds3231_modded_print_modification_status(void);
