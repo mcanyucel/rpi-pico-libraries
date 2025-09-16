@@ -5,10 +5,22 @@
 
 // DS3231 I2C Configuration
 #define DS3231_I2C_ADDRESS 0x68
+
+#ifndef DS3231_I2C_PORT
 #define DS3231_I2C_PORT i2c1
+#endif
+
+#ifndef DS3231_SDA_PIN
 #define DS3231_SDA_PIN 18
+#endif
+
+#ifndef DS3231_SCL_PIN
 #define DS3231_SCL_PIN 19
-#define DS3231_INT_PIN 5  // INT/SQW pin connected to GP5
+#endif
+
+#ifndef DS3231_INT_PIN
+#define DS3231_INT_PIN 5
+#endif
 
 // DS3231 Register Addresses
 #define DS3231_REG_SECONDS 0x00

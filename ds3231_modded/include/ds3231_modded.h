@@ -5,10 +5,22 @@
 
 // DS3231 Hardware-Modified I2C Configuration
 #define DS3231_MODDED_I2C_ADDRESS 0x68
+
+#ifndef DS3231_MODDED_I2C_PORT
 #define DS3231_MODDED_I2C_PORT i2c0
+#endif
+
+#ifndef DS3231_MODDED_SDA_PIN
 #define DS3231_MODDED_SDA_PIN 0
+#endif
+
+#ifndef DS3231_MODDED_SCL_PIN
 #define DS3231_MODDED_SCL_PIN 1
-#define DS3231_MODDED_INT_PIN 5  // INT/SQW pin connected to GP5
+#endif
+
+#ifndef DS3231_MODDED_INT_PIN
+#define DS3231_MODDED_INT_PIN 5
+#endif
 
 // DS3231 Register Addresses (same as original)
 #define DS3231_MODDED_REG_SECONDS 0x00

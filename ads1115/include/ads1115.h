@@ -29,10 +29,21 @@
 // HARDWARE CONFIGURATION
 // ============================================================================
 
+#ifndef ADS1115_I2C_PORT
 #define ADS1115_I2C_PORT    i2c0
+#endif
+
+#ifndef ADS1115_I2C_ADDR
 #define ADS1115_I2C_ADDR    0x48
+#endif
+
+#ifndef ADS1115_SDA_PIN
 #define ADS1115_SDA_PIN     16
+#endif
+
+#ifndef ADS1115_SCL_PIN
 #define ADS1115_SCL_PIN     17
+#endif
 
 // ============================================================================
 // REGISTER ADDRESSES

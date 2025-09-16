@@ -33,7 +33,9 @@
 #define SSD1306_I2C_ADDR            0x3C
 #endif
 
+#ifndef SSD1306_I2C_INSTANCE
 #define SSD1306_I2C_INSTANCE i2c0
+#endif
 
 // I2C clock frequency (400kHz is standard, can go up to 1MHz for faster updates)
 #ifndef SSD1306_I2C_CLK
