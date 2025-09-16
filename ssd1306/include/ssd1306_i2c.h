@@ -120,6 +120,25 @@ void SSD1306_init(ssd1306_device_t *device, const ssd1306_i2c_config_t *config);
  */
 void SSD1306_scroll(ssd1306_device_t *device, bool on);
 
+/**
+ * @brief Turn the display on or off
+ * @param device Pointer to SSD1306 device
+ * @param on true to turn display on, false to turn display off
+ */
+void SSD1306_display_on(ssd1306_device_t *device, bool on);
+
+/**
+ * @brief Turn the display off (saves power)
+ * @param device Pointer to SSD1306 device
+ */
+void SSD1306_display_off(ssd1306_device_t *device);
+
+/**
+ * @brief Turn the display on
+ * @param device Pointer to SSD1306 device
+ */
+void SSD1306_display_on_simple(ssd1306_device_t *device);
+
 // Render Functions
 /**
  * @brief Calculate the buffer length needed for a render area

@@ -155,6 +155,26 @@ void SSD1306_scroll(ssd1306_device_t *device, bool on) {
     SSD1306_send_cmd_list(device, cmds, count_of(cmds));
 }
 
+void SSD1306_display_on(ssd1306_device_t *device, bool on) {
+    // Turn display on (0xAF) or off (0xAE)
+    uint8_t cmd = SSD1306_SET_DISP | (on ? 0x01 : 0x00);
+    SSD1306_send_cmd(device, cmd);
+    
+    if (on) {
+        printf("SSD1306 display turned ON\n");
+    } else {
+        printf("SSD1306 display turned OFF (power saving mode)\n");
+    }
+}
+
+void SSD1306_display_off(ssd1306_device_t *device) {
+    SSD1306_display_on(device, false);
+}
+
+void SSD1306_display_on_simple(ssd1306_device_t *device) {
+    SSD1306_display_on(device, true);
+}
+
 void render(ssd1306_device_t *device, uint8_t *buf, struct render_area *area) {
     // update a portion of the display with a render area
     uint8_t cmds[] = {
