@@ -1,41 +1,45 @@
 #include "peripheral_power.h"
 #include "hardware/gpio.h"
+#include "pico/stdlib.h"
 
-static bool power_enabled = false;
-static bool initialized = false;
 
-void peripheral_power_init(bool start_enabled) {
-    if (initialized) return;
+void peripheral_power_create_config(peripheral_power_config_t *config, uint8_t gate_pin, bool start_enabled) {
+    if (!config) return;
 
-    gpio_init(MOSFET_GATE_PIN);
-    gpio_set_dir(MOSFET_GATE_PIN, GPIO_OUT);
-    initialized = true;
+    config->gate_pin = gate_pin;
+    config->start_enabled = start_enabled;
+}
 
-    if (start_enabled) {
-        peripheral_power_enable();
+void peripheral_power_init(peripheral_power_t *power, const peripheral_power_config_t *config) {
+    if (!power || !config) return;
+    if (power->initialized) return;
+
+    power->config = *config;
+    gpio_init(config->gate_pin);
+    gpio_set_dir(config->gate_pin, GPIO_OUT);
+    power->initialized = true;
+
+    if (config->start_enabled) {
+        peripheral_power_enable(power);
     } else {
-        peripheral_power_disable();
+        peripheral_power_disable(power);
     }
 }
 
-int peripheral_power_enable(void) {
-    if (!initialized) return -1;
-    if (power_enabled) return 0; // Already enabled
+bool peripheral_power_enable(peripheral_power_t *power) {
+    if (!power->initialized) return false;
+    if (power->power_enabled) return true; 
 
-    gpio_put(MOSFET_GATE_PIN, 0); // P-channel MOSFET ON (gate low)
-    power_enabled = true;
-    return 1;
+    gpio_put(power->config.gate_pin, 0); // P-channel MOSFET ON (gate low)
+    power->power_enabled = true;
+    return true;
 }
 
-int peripheral_power_disable(void) {
-    if (!initialized) return -1;
-    if (!power_enabled) return 0; // Already disabled
+bool peripheral_power_disable(peripheral_power_t *power) {
+    if (!power->initialized) return false;
+    if (!power->power_enabled) return true; // Already disabled
 
-    gpio_put(MOSFET_GATE_PIN, 1); // P-channel MOSFET OFF (gate high)
-    power_enabled = false;
-    return 1;
-}
-
-bool peripheral_power_is_enabled(void) {
-    return power_enabled;
+    gpio_put(power->config.gate_pin, 1); // P-channel MOSFET OFF (gate high)
+    power->power_enabled = false;
+    return true;
 }
