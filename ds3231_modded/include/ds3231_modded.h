@@ -73,6 +73,7 @@ bool ds3231_modded_read_regs(ds3231_modded_t *device, uint8_t start_reg, uint8_t
 
 // Initialization
 bool ds3231_modded_init(ds3231_modded_t *device, const ds3231_modded_config_t *config);
+void ds3231_modded_deinit(ds3231_modded_t *device);
 bool ds3231_modded_is_present(ds3231_modded_t *device);
 void ds3231_modded_print_status(ds3231_modded_t *device);
 

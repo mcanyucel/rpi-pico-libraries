@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct {
     uint8_t gate_pin;   // GPIO pin controlling the MOSFET gate

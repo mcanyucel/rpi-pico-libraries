@@ -204,6 +204,26 @@ bool ds3231_modded_init(ds3231_modded_t *device, const ds3231_modded_config_t *c
     return true;
 }
 
+void ds3231_modded_deinit(ds3231_modded_t *device) {
+    if (!device || !device->initialized)
+        return;
+    
+    // If DS3231 is powered from VCC (not battery-only), disable I2C to prevent backfeeding
+    // If it's battery-only, we might still want to disable I2C to save power
+    gpio_set_function(device->config.sda_pin, GPIO_FUNC_SIO);
+    gpio_set_function(device->config.scl_pin, GPIO_FUNC_SIO);
+    
+    // Drive I2C pins LOW
+    gpio_set_dir(device->config.sda_pin, GPIO_OUT);
+    gpio_set_dir(device->config.scl_pin, GPIO_OUT);
+    gpio_put(device->config.sda_pin, 0);
+    gpio_put(device->config.scl_pin, 0);
+    
+    // Keep interrupt pin configured for wake-up
+    // Don't modify the interrupt pin - it needs to stay configured to wake us up
+    // Note: Don't mark as uninitialized since we'll need the interrupt to work
+}
+
 bool ds3231_modded_is_present(ds3231_modded_t *device)
 {
     if (!device)

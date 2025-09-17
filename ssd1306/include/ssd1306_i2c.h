@@ -115,6 +115,12 @@ void SSD1306_send_buf(ssd1306_device_t *device, uint8_t buf[], int buflen);
 void SSD1306_init(ssd1306_device_t *device, const ssd1306_i2c_config_t *config);
 
 /**
+ * @brief Deinitialize the SSD1306 display
+ * This function should be called when the display is no longer needed
+ */
+void SSD1306_deinit(ssd1306_device_t *device);
+
+/**
  * @brief Enable or disable horizontal scrolling
  * @param on true to enable scrolling, false to disable
  */
