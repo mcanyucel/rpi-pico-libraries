@@ -202,7 +202,7 @@ void WriteChar(uint8_t *buf, int16_t x, int16_t y, uint8_t ch);
  * @param y Y coordinate (can be any value 0 to SSD1306_HEIGHT-8)
  * @param str Null-terminated string to write
  */
-void WriteString(uint8_t *buf, int16_t x, int16_t y, char *str);
+void WriteString(uint8_t *buf, int16_t x, int16_t y, const char *str);
 
 /**
  * @brief Write centered text

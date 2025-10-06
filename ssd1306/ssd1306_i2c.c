@@ -321,7 +321,7 @@ void WriteChar(uint8_t *buf, int16_t x, int16_t y, uint8_t ch)
     }
 }
 
-void WriteString(uint8_t *buf, int16_t x, int16_t y, char *str)
+void WriteString(uint8_t *buf, int16_t x, int16_t y, const char *str)
 {
     int current_x = x;
 
