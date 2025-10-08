@@ -7,7 +7,10 @@ A collection of professional C libraries for common peripherals used with the Ra
 | Library | Description | Interface | Status |
 |---------|-------------|-----------|---------|
 | **ads1115** | 16-bit ADC with programmable gain | I2C | Basic Functionality |
+| **ina219** | High-side current/power monitor | I2C | Basic Functionality |
+| **battery** | Battery voltage measurement utilities | Analog | Basic Functionality |
 | **ds3231** | Real-time clock with temperature sensor | I2C | Basic Functionality |
+| **ds3231_modded** | DS3231 RTC with extended features | I2C | Modded/Extended |
 | **ssd1306** | 128x64 OLED display with enhanced fonts | I2C | Basic Functionality |
 | **sh1106** | 128x64 OLED display with font support | I2C | Basic Functionality |
 | **sdcard** | SD card hardware configuration | SPI | Config only |
@@ -37,16 +40,25 @@ project(my_pico_project)
 pico_sdk_init()
 
 # Add only the libraries you need
+
 add_subdirectory(libs/ssd1306)
+add_subdirectory(libs/sh1106)
 add_subdirectory(libs/ds3231)
+add_subdirectory(libs/ds3231_modded)
 add_subdirectory(libs/ads1115)
+add_subdirectory(libs/ina219)
+add_subdirectory(libs/battery)
 
 add_executable(my_project src/main.c)
 
 target_link_libraries(my_project
     ssd1306
+    sh1106
     ds3231
+    ds3231_modded
     ads1115
+    ina219
+    battery
     pico_stdlib
 )
 
@@ -60,6 +72,10 @@ pico_add_extra_outputs(my_project)
 #include "ds3231.h"
 #include "ads1115.h"
 
+#include "ina219_i2c.h"
+#include "battery.h"
+#include "ds3231_modded.h"
+
 int main() {
     stdio_init_all();
     
@@ -67,6 +83,9 @@ int main() {
     SSD1306_init();
     ds3231_init();
     ads1115_init();
+        ina219_init();
+        battery_init();
+        ds3231_modded_init();
     
     // Use the libraries...
     
@@ -237,10 +256,22 @@ rpi-pico-libraries/
 │   ├── CMakeLists.txt
 │   ├── ads1115.c
 │   └── include/ads1115.h
+├── ina219/
+│   ├── CMakeLists.txt
+│   ├── ina219_i2c.c
+│   └── include/ina219_i2c.h
+├── battery/
+│   ├── CMakeLists.txt
+│   ├── battery.c
+│   └── include/battery.h
 ├── ds3231/
 │   ├── CMakeLists.txt
 │   ├── ds3231.c
 │   └── include/ds3231.h
+├── ds3231_modded/
+│   ├── CMakeLists.txt
+│   ├── ds3231_modded.c
+│   └── include/ds3231_modded.h
 ├── ssd1306/
 │   ├── CMakeLists.txt
 │   ├── ssd1306_i2c.c

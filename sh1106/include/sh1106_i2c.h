@@ -35,7 +35,9 @@
 #define SH1106_I2C_ADDR            0x3C
 #endif
 
+#ifndef SH1106_I2C_INSTANCE
 #define SH1106_I2C_INSTANCE i2c0
+#endif
 
 // I2C clock frequency (400kHz is standard, can go up to 1MHz for faster updates)
 #ifndef SH1106_I2C_CLK

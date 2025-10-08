@@ -26,14 +26,12 @@ void sh1106_calc_render_area_buflen(struct sh1106_render_area *area) {
     area->buflen = (area->end_col - area->start_col + 1) * (area->end_page - area->start_page + 1);
 }
 
-#ifdef i2c_default
-
 void SH1106_send_cmd(uint8_t cmd) {
     // I2C write process expects a control byte followed by data
     // this "data" can be a command or data to follow up a command
     // Co = 1, D/C = 0 => the driver expects a command
     uint8_t buf[2] = {0x80, cmd};
-    i2c_write_blocking(i2c_default, SH1106_I2C_ADDR, buf, 2, false);
+    i2c_write_blocking(SH1106_I2C_INSTANCE, SH1106_I2C_ADDR, buf, 2, false);
 }
 
 void SH1106_send_cmd_list(uint8_t *buf, int num) {
@@ -48,9 +46,9 @@ void SH1106_send_buf(uint8_t buf[], int buflen) {
     uint8_t *temp_buf = malloc(buflen + 1);
     temp_buf[0] = 0x40; // Data mode
     memcpy(temp_buf + 1, buf, buflen);
-    
-    i2c_write_blocking(i2c_default, SH1106_I2C_ADDR, temp_buf, buflen + 1, false);
-    
+
+    i2c_write_blocking(SH1106_I2C_INSTANCE, SH1106_I2C_ADDR, temp_buf, buflen + 1, false);
+
     free(temp_buf);
 }
 
@@ -244,5 +242,3 @@ void SH1106_WriteCentered(uint8_t *buf, int16_t y, char *str) {
     
     SH1106_WriteString(buf, x, y, str);
 }
-
-#endif // i2c_default

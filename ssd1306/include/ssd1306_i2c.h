@@ -9,31 +9,29 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef SSD1306_I2C_H
-#define SSD1306_I2C_H
+#pragma once
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include "hardware/i2c.h"
+
+typedef struct {
+    i2c_inst_t *i2c_port;   // I2C instance (e.g., i2c0 or i2c1)
+    uint8_t i2c_address;    // I2C address of the SSD1306 (usually 0x3C or 0x3D)
+    uint8_t sda_pin;        // GPIO pin for SDA
+    uint8_t scl_pin;        // GPIO pin for SCL
+    uint32_t baudrate;      // I2C clock speed in kHz (e.g., 100, 400, 1000)
+} ssd1306_i2c_config_t;
+
+typedef struct {
+    ssd1306_i2c_config_t config;
+    bool initialized;
+} ssd1306_device_t;
 
 // Display dimensions
 #define SSD1306_HEIGHT              64
 #define SSD1306_WIDTH               128
-
-// Default I2C pins (can be overridden in your project)
-#ifndef SSD1306_I2C_SDA_PIN
-#define SSD1306_I2C_SDA_PIN         16   // GP4 (pin 16)
-#endif
-
-#ifndef SSD1306_I2C_SCL_PIN
-#define SSD1306_I2C_SCL_PIN         17   // GP5 (pin 17)
-#endif
-
-#ifndef SSD1306_I2C_ADDR
-#define SSD1306_I2C_ADDR            0x3C
-#endif
-
-#define SSD1306_I2C_INSTANCE i2c0
 
 // I2C clock frequency (400kHz is standard, can go up to 1MHz for faster updates)
 #ifndef SSD1306_I2C_CLK
@@ -87,38 +85,65 @@ struct render_area {
     int buflen;             ///< Buffer length for this area (calculated)
 };
 
+ssd1306_i2c_config_t ssd1306_i2c_create_config(uint8_t sda_pin, uint8_t scl_pin, i2c_inst_t *i2c_port);
+
 // Core SSD1306 Functions
 /**
  * @brief Send a single command to the SSD1306
  * @param cmd Command byte to send
  */
-void SSD1306_send_cmd(uint8_t cmd);
+void SSD1306_send_cmd(ssd1306_device_t *device, uint8_t cmd);
 
 /**
  * @brief Send a list of commands to the SSD1306
  * @param buf Array of command bytes
  * @param num Number of commands in the array
  */
-void SSD1306_send_cmd_list(uint8_t *buf, int num);
+void SSD1306_send_cmd_list(ssd1306_device_t *device, uint8_t *buf, int num);
 
 /**
  * @brief Send a buffer of display data to the SSD1306
  * @param buf Buffer containing display data
  * @param buflen Length of the buffer
  */
-void SSD1306_send_buf(uint8_t buf[], int buflen);
+void SSD1306_send_buf(ssd1306_device_t *device, uint8_t buf[], int buflen);
 
 /**
  * @brief Initialize the SSD1306 display
  * Must be called before any other display operations
  */
-void SSD1306_init(void);
+void SSD1306_init(ssd1306_device_t *device, const ssd1306_i2c_config_t *config);
+
+/**
+ * @brief Deinitialize the SSD1306 display
+ * This function should be called when the display is no longer needed
+ */
+void SSD1306_deinit(ssd1306_device_t *device);
 
 /**
  * @brief Enable or disable horizontal scrolling
  * @param on true to enable scrolling, false to disable
  */
-void SSD1306_scroll(bool on);
+void SSD1306_scroll(ssd1306_device_t *device, bool on);
+
+/**
+ * @brief Turn the display on or off
+ * @param device Pointer to SSD1306 device
+ * @param on true to turn display on, false to turn display off
+ */
+void SSD1306_display_on(ssd1306_device_t *device, bool on);
+
+/**
+ * @brief Turn the display off (saves power)
+ * @param device Pointer to SSD1306 device
+ */
+void SSD1306_display_off(ssd1306_device_t *device);
+
+/**
+ * @brief Turn the display on
+ * @param device Pointer to SSD1306 device
+ */
+void SSD1306_display_on_simple(ssd1306_device_t *device);
 
 // Render Functions
 /**
@@ -132,7 +157,7 @@ void calc_render_area_buflen(struct render_area *area);
  * @param buf Buffer containing display data
  * @param area Render area to update
  */
-void render(uint8_t *buf, struct render_area *area);
+void render(ssd1306_device_t *device, uint8_t *buf, struct render_area *area);
 
 // Graphics Functions
 /**
@@ -177,7 +202,7 @@ void WriteChar(uint8_t *buf, int16_t x, int16_t y, uint8_t ch);
  * @param y Y coordinate (can be any value 0 to SSD1306_HEIGHT-8)
  * @param str Null-terminated string to write
  */
-void WriteString(uint8_t *buf, int16_t x, int16_t y, char *str);
+void WriteString(uint8_t *buf, int16_t x, int16_t y, const char *str);
 
 /**
  * @brief Write centered text
@@ -225,5 +250,3 @@ void WriteLines(uint8_t *buf, int16_t x, int16_t y, char **lines, int line_count
  * @param buf Display buffer to fill
  */
 #define SSD1306_FILL_BUFFER(buf) memset(buf, 0xFF, SSD1306_BUF_LEN)
-
-#endif // SSD1306_I2C_H
