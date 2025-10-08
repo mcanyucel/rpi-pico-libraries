@@ -1,0 +1,17 @@
+// Nordic UART Service GATT Profile
+
+// Generic Access Service
+PRIMARY_SERVICE, GAP_SERVICE
+CHARACTERISTIC, GAP_DEVICE_NAME, READ, "LVDT-Logger"
+
+// Generic Attribute Service  
+PRIMARY_SERVICE, GATT_SERVICE
+
+// Nordic UART Service
+PRIMARY_SERVICE, 6E400001-B5A3-F393-E0A9-E50E24DCCA9E
+
+// TX Characteristic - We send notifications here
+CHARACTERISTIC, 6E400003-B5A3-F393-E0A9-E50E24DCCA9E, NOTIFY, 
+
+// RX Characteristic - We receive writes here (not used, but included for standard NUS)
+CHARACTERISTIC, 6E400002-B5A3-F393-E0A9-E50E24DCCA9E, WRITE_WITHOUT_RESPONSE | WRITE | DYNAMIC,

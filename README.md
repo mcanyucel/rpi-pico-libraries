@@ -11,6 +11,7 @@ A collection of professional C libraries for common peripherals used with the Ra
 | **ssd1306** | 128x64 OLED display with enhanced fonts | I2C | Basic Functionality |
 | **sh1106** | 128x64 OLED display with font support | I2C | Basic Functionality |
 | **sdcard** | SD card hardware configuration | SPI | Config only |
+| **ble_nordic_uart** | Nordic UART over BLE | BLE | Basic Functionality (Full TX, No RX) |
 
 ## Quick Start
 
@@ -183,6 +184,10 @@ float voltage = ads1115_raw_to_voltage(raw_value);
 - **SDA:** GPIO 16
 - **SCL:** GPIO 17
 - **Address:** 0x3C
+
+### Bluetooth Low Energy (BLE) Nordic UART
+
+See the readme in `drivers/ble_nordic_uart/` for detailed usage instructions.
 
 ## Development Workflow
 
