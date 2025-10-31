@@ -2,25 +2,21 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "hardware/i2c.h"
 
-// DS3231 I2C Configuration
-#define DS3231_I2C_ADDRESS 0x68
+typedef struct {
+    i2c_inst_t *i2c_port;
+    uint8_t i2c_address;
+    uint8_t sda_pin;
+    uint8_t scl_pin;
+    uint8_t int_pin;
+    uint32_t baudrate;
+ } ds3231_config_t;
 
-#ifndef DS3231_I2C_PORT
-#define DS3231_I2C_PORT i2c1
-#endif
-
-#ifndef DS3231_SDA_PIN
-#define DS3231_SDA_PIN 18
-#endif
-
-#ifndef DS3231_SCL_PIN
-#define DS3231_SCL_PIN 19
-#endif
-
-#ifndef DS3231_INT_PIN
-#define DS3231_INT_PIN 5
-#endif
+typedef struct {
+    ds3231_config_t config;
+    bool initialized;
+} ds3231_t;
 
 // DS3231 Register Addresses
 #define DS3231_REG_SECONDS 0x00
@@ -65,39 +61,42 @@ typedef struct {
 uint8_t ds3231_dec_to_bcd(uint8_t dec);
 uint8_t ds3231_bcd_to_dec(uint8_t bcd);
 
+// Configuration helper
+ds3231_config_t ds3231_create_config(uint8_t sda_pin, uint8_t scl_pin, uint8_t int_pin, i2c_inst_t *i2c_port);
+
 // Low-level I2C Functions
-bool ds3231_write_reg(uint8_t reg, uint8_t value);
-bool ds3231_read_reg(uint8_t reg, uint8_t *value);
-bool ds3231_read_regs(uint8_t start_reg, uint8_t *buffer, uint8_t count);
+bool ds3231_write_reg(ds3231_t *device, uint8_t reg, uint8_t value);
+bool ds3231_read_reg(ds3231_t *device, uint8_t reg, uint8_t *value);
+bool ds3231_read_regs(ds3231_t *device, uint8_t start_reg, uint8_t *buffer, uint8_t count);
 
 // Initialization
-bool ds3231_init(void);
-bool ds3231_is_present(void);
+bool ds3231_init(ds3231_t *device, const ds3231_config_t *config);
+bool ds3231_is_present(ds3231_t *device);
 
 // Time Functions
-bool ds3231_read_time(ds3231_time_t *time);
-bool ds3231_read_date(ds3231_date_t *date);
-bool ds3231_read_datetime(ds3231_datetime_t *datetime);
-bool ds3231_set_time(const ds3231_time_t *time);
-bool ds3231_set_date(const ds3231_date_t *date);
-bool ds3231_set_datetime(const ds3231_datetime_t *datetime);
+bool ds3231_read_time(ds3231_t *device, ds3231_time_t *time);
+bool ds3231_read_date(ds3231_t *device, ds3231_date_t *date);
+bool ds3231_read_datetime(ds3231_t *device, ds3231_datetime_t *datetime);
+bool ds3231_set_time(ds3231_t *device, const ds3231_time_t *time);
+bool ds3231_set_date(ds3231_t *device, const ds3231_date_t *date);
+bool ds3231_set_datetime(ds3231_t *device, const ds3231_datetime_t *datetime);
 
 // Alarm Functions
-bool ds3231_clear_alarm_flags(void);
-bool ds3231_enable_alarm1_interrupt(void);
-bool ds3231_disable_alarm1_interrupt(void);
-bool ds3231_check_alarm1_triggered(void);
-bool ds3231_set_alarm1_time(const ds3231_time_t *alarm_time, bool ignore_day);
-bool ds3231_set_alarm1_in_seconds(uint16_t seconds_from_now);
-bool ds3231_set_alarm1_in_minutes(uint8_t minutes_from_now);
+bool ds3231_clear_alarm_flags(ds3231_t *device);
+bool ds3231_enable_alarm1_interrupt(ds3231_t *device);
+bool ds3231_disable_alarm1_interrupt(ds3231_t *device);
+bool ds3231_check_alarm1_triggered(ds3231_t *device);
+bool ds3231_set_alarm1_time(ds3231_t *device, const ds3231_time_t *alarm_time, bool ignore_day);
+bool ds3231_set_alarm1_in_seconds(ds3231_t *device, uint16_t seconds_from_now);
+bool ds3231_set_alarm1_in_minutes(ds3231_t *device, uint8_t minutes_from_now);
 
 // Status Functions
-bool ds3231_read_control_register(uint8_t *control);
-bool ds3231_read_status_register(uint8_t *status);
+bool ds3231_read_control_register(ds3231_t *device, uint8_t *control);
+bool ds3231_read_status_register(ds3231_t *device, uint8_t *status);
 
 // Temperature
-bool ds3231_read_temperature(float *temperature);
+bool ds3231_read_temperature(ds3231_t *device, float *temperature);
 
-// GPIO Helper for INT Pin
-bool ds3231_init_interrupt_pin(void);
-bool ds3231_read_interrupt_pin(void);
+        // GPIO Helper for INT Pin
+bool ds3231_init_interrupt_pin(ds3231_t *device);
+bool ds3231_read_interrupt_pin(ds3231_t *device);
