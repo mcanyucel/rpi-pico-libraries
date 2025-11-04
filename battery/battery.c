@@ -12,8 +12,9 @@
 #include "hardware/gpio.h"
 #include <stdio.h>
 
-#define MAX_SAMPLES         10                      // Maximum samples for averaging
-#define SETTLING_TIME_MS    50                      // ADC settling time
+#define MAX_SAMPLES         50                       //< Maximum samples for averaging
+#define MIN_VALID_RAW       10                       //< Minimum valid ADC reading to consider
+#define MAX_VALID_RAW       4050                     //< Maximum valid ADC reading for 12-bit ADC
 
 // Static variables
 static bool initialized = false;
@@ -33,21 +34,33 @@ bool battery_init(void)
     gpio_init(25);
     gpio_set_dir(25, GPIO_OUT);
     gpio_put(25, 1);  // HIGH enables GPIO29 ADC
+    sleep_ms(100); // Wait for stabilization
     
     // Initialize GPIO29 for battery sensing
     gpio_init(29);
     gpio_set_dir(29, GPIO_IN);
+    gpio_disable_pulls(29); // No pull-up/down resistors
     
     adc_select_input(VSYS_ADC_CHANNEL);
     sleep_ms(200);
     
+    // Dummy reads to flush ADC
+    for (int i = 0; i < 5; i++) {
+        adc_read();
+        sleep_ms(50);
+    }
+
     printf("Battery monitoring initialized (ADC%d - VSYS)\n", VSYS_ADC_CHANNEL);
     
     initialized = true;
     return true;
 }
-
-
+/// @brief Get a single ADC reading from the battery
+/// @details This function reads the ADC value from the VSYS pin once.
+/// It is recommended to use battery_get_averaged_adc() for better accuracy as this
+/// single reading is frequently either zero or an outlier.
+/// @param None
+/// @return Raw ADC value (0-4095) or 0 if error
 static uint16_t battery_get_single_adc(void) {
     if (!initialized) {
         printf("ERROR: Battery system not initialized\n");
@@ -81,30 +94,26 @@ static uint16_t battery_get_averaged_adc(void)
     
     printf("DEBUG: Taking %d ADC samples for averaging...\n", MAX_SAMPLES);
     
-    // Take multiple samples
+    // Ensure GPIO25 is HIGH before sampling
+    gpio_put(25, 1);
+    sleep_ms(10);
+    
+    // Take multiple samples with small delays
     for (int i = 0; i < MAX_SAMPLES; i++) {
-        // Ensure GPIO25 is HIGH before every reading
-        // gpio_put(25, 1);
-        // sleep_ms(10); // Brief delay for wireless to settle
-        // gpio_init(29);
-        // gpio_set_dir(29, GPIO_IN);
-        // sleep_ms(100); // Match Python's settling time
-        
         adc_select_input(VSYS_ADC_CHANNEL);
-        sleep_ms(10); // Additional ADC settling
+        sleep_us(2000);  // 2ms between samples (faster than sleep_ms)
         
         uint16_t raw = adc_read();
         printf("DEBUG: Sample %d: %d\n", i + 1, raw);
         
-        if (raw > 10) {
+        // Reject outliers (too low OR too high)
+        if (raw >= MIN_VALID_RAW && raw <= MAX_VALID_RAW) {
             samples[valid_samples] = raw;
             sum += raw;
             valid_samples++;
         } else {
-            printf("DEBUG: Rejecting sample %d (too low: %d)\n", i + 1, raw);
+            printf("DEBUG: Rejecting sample %d (out of range: %d)\n", i + 1, raw);
         }
-        
-        sleep_ms(10);
     }
     
     if (valid_samples == 0) {
@@ -113,7 +122,16 @@ static uint16_t battery_get_averaged_adc(void)
     }
     
     uint16_t average = sum / valid_samples;
-    printf("DEBUG: Valid samples: %d/%d, Average: %d\n", valid_samples, MAX_SAMPLES, average);
+    
+    // Calculate min/max for diagnostics
+    uint16_t min_val = 4095, max_val = 0;
+    for (int i = 0; i < valid_samples; i++) {
+        if (samples[i] < min_val) min_val = samples[i];
+        if (samples[i] > max_val) max_val = samples[i];
+    }
+    
+    printf("DEBUG: Valid=%d/%d, Avg=%d, Min=%d, Max=%d, Spread=%d\n", 
+           valid_samples, MAX_SAMPLES, average, min_val, max_val, max_val - min_val);
     
     return average;
 }
@@ -125,7 +143,7 @@ float battery_get_voltage(void)
         return -1.0f;
     }
 
-    uint16_t raw_value = battery_get_single_adc();
+    uint16_t raw_value = battery_get_averaged_adc();
     
     if (raw_value == 0) {
         printf("ERROR: Failed to get valid ADC reading\n");
@@ -177,7 +195,7 @@ bool battery_get_measurement(battery_measurement_t *measurement)
         return false;
     }
 
-    uint16_t raw_value = battery_get_single_adc();
+    uint16_t raw_value = battery_get_averaged_adc();
     
     if (raw_value == 0) {
         return false;
@@ -227,5 +245,5 @@ bool battery_is_initialized(void)
 
 uint16_t battery_get_raw_adc(void)
 {
-    return battery_get_single_adc();
+    return battery_get_averaged_adc();
 }
