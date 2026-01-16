@@ -36,7 +36,7 @@ typedef struct {
 // CORRECTED ADC Constants
 #define VSYS_ADC_CHANNEL    3                       // ADC3 is internally connected to VSYS
 #define ADC_CONVERSION_FACTOR (3.284f / 4095.0f)     // 12-bit ADC, 3.3V reference - It should be 3.3, but measured as 3.284
-#define VSYS_DIVIDER_RATIO  2.414f                    // Voltage divider ratio for VSYS - It should be 3, but empirical tests show 2.414
+#define VSYS_DIVIDER_RATIO  3.0f                    // Voltage divider ratio for VSYS
 
 // GPIO Constant (for reference only - don't manipulate directly for VSYS)
 #define BATTERY_SENSE_PIN  29   // GPIO29 for battery sensing
