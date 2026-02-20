@@ -34,6 +34,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
@@ -102,6 +103,15 @@ bool ble_nordic_uart_init(const char *device_name);
  * @note Message is truncated if longer than BLE_UART_MAX_MESSAGE_LENGTH.
  */
 bool ble_nordic_uart_send(const char *message);
+
+/**
+ * @brief Send raw byte data via BLE
+ * 
+ * @param data Pointer to byte array to send
+ * @param length Length of byte array (max length BLE_UART_MAX_MESSAGE_LENGTH)
+ * @return true if data sent successfully, false if not connected or error
+ */
+bool ble_nordic_uart_send_bytes(const uint8_t *data, size_t length);
 
 /**
  * @brief Get current BLE connection state

@@ -351,6 +351,42 @@ bool ble_nordic_uart_send(const char *message)
     return true;
 }
 
+bool ble_nordic_uart_send_bytes(const uint8_t *data, size_t length) {
+    if (!ble_nordic_uart_is_connected())
+    {
+        return false;
+    }
+
+    if (!data)
+    {
+        return false;
+    }
+
+    if (length == 0)
+    {
+        return false;
+    }
+
+    if (length > BLE_UART_MAX_MESSAGE_LENGTH)
+    {
+        printf("[BLE UART] Data too long (%zu bytes), truncating to %d bytes\n", 
+               length, BLE_UART_MAX_MESSAGE_LENGTH);
+        length = BLE_UART_MAX_MESSAGE_LENGTH;
+    }
+
+    memcpy(ble_ctx.message_buffer, data, length);
+    ble_ctx.message_length = length;
+
+    att_server_notify(ble_ctx.connection_handle,
+                      ATT_CHARACTERISTIC_6E400003_B5A3_F393_E0A9_E50E24DCCA9E_01_VALUE_HANDLE,
+                      ble_ctx.message_buffer,
+                      ble_ctx.message_length);
+
+    return true;
+
+    
+}
+
 ble_uart_state_t ble_nordic_uart_get_state(void)
 {
     return ble_ctx.state;
