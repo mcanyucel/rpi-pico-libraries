@@ -204,6 +204,12 @@ bool ds3231_read_status_register(ds3231_t *dev, uint8_t *status) {
     return read_reg(dev, DS3231_REG_STATUS, status);
 }
 
+bool ds3231_write_status_register(ds3231_t *dev, uint8_t status) {
+    if (!dev || !dev->initialized) return false;
+    uint8_t buf[2] = { DS3231_REG_STATUS, status };
+    return i2c_write_blocking(dev->config.i2c, dev->config.address, buf, 2, false) == 2;
+}
+
 // ============================================================================
 // INT PIN
 // ============================================================================

@@ -245,6 +245,8 @@ int tcp_client_send(tcp_client_t *client,
     absolute_time_t connect_timeout = make_timeout_time_ms(client->config.connect_timeout_ms);
     while (!client->connected && !client->complete && !time_reached(connect_timeout)) {
         cyw43_arch_poll();
+        if (client->config.tick_callback)
+            client->config.tick_callback();
         sleep_ms(10);
     }
 
@@ -276,6 +278,8 @@ int tcp_client_send(tcp_client_t *client,
     absolute_time_t response_timeout = make_timeout_time_ms(client->config.response_timeout_ms);
     while (!client->complete && !time_reached(response_timeout)) {
         cyw43_arch_poll();
+        if (client->config.tick_callback)
+            client->config.tick_callback();
         sleep_ms(10);
     }
 

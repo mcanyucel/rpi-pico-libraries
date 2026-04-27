@@ -131,5 +131,6 @@ bool ds3231_read_interrupt_pin(ds3231_t *dev);
 // Status registers (raw access for diagnostics)
 bool ds3231_read_control_register(ds3231_t *dev, uint8_t *control);
 bool ds3231_read_status_register(ds3231_t *dev, uint8_t *status);
+bool ds3231_write_status_register(ds3231_t *dev, uint8_t status);
 
 #endif // DS3231_H

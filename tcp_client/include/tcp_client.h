@@ -20,6 +20,7 @@ struct tcp_pcb;
 // Status callback function type
 typedef void (*tcp_client_status_callback_t)(const char *status_message);
 
+typedef void (*tcp_tick_callback_t)(void);
 /**
  * @brief TCP client configuration structure
  *
@@ -35,6 +36,7 @@ typedef struct
     uint32_t connect_timeout_ms;
     uint32_t response_timeout_ms;
     tcp_client_status_callback_t status_callback;
+    tcp_tick_callback_t tick_callback;
 } tcp_client_config_t;
 
 /**
