@@ -238,6 +238,7 @@ int tcp_client_send(tcp_client_t *client,
     if (err != ERR_OK) {
         printf("[TCP_CLIENT] Connect initiation failed: %d\n", err);
         tcp_close(client->pcb);
+        client->pcb = NULL; // Prevent double free in error callback
         return TCP_CLIENT_ERROR_CONNECT;
     }
 
@@ -253,6 +254,7 @@ int tcp_client_send(tcp_client_t *client,
     if (!client->connected) {
         printf("[TCP_CLIENT] Connection timeout\n");
         tcp_close(client->pcb);
+        client->pcb = NULL; // Prevent double free in error callback
         return TCP_CLIENT_ERROR_TIMEOUT;
     }
 
@@ -271,6 +273,7 @@ int tcp_client_send(tcp_client_t *client,
     if (err != ERR_OK) {
         printf("[TCP_CLIENT] Write failed: %d\n", err);
         tcp_close(client->pcb);
+        client->pcb = NULL; // Prevent double free in error callback
         return TCP_CLIENT_ERROR_SEND;
     }
 
@@ -285,6 +288,7 @@ int tcp_client_send(tcp_client_t *client,
 
     // Close connection
     tcp_close(client->pcb);
+    client->pcb = NULL; // Prevent double free in error callback
 
     if (!client->complete) {
         printf("[TCP_CLIENT] Response timeout\n");
