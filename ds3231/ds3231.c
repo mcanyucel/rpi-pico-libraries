@@ -93,8 +93,19 @@ bool ds3231_read_date(ds3231_t *dev, ds3231_date_t *date) {
 }
 
 bool ds3231_read_datetime(ds3231_t *dev, ds3231_datetime_t *datetime) {
-    return ds3231_read_date(dev, &datetime->date) &&
-           ds3231_read_time(dev, &datetime->time);
+    // One read: the user buffers latch on I2C START, so date and time
+    // come from the same instant.
+    uint8_t raw[7];
+    if (!read_regs(dev, DS3231_REG_SECONDS, raw, 7)) return false;
+
+    datetime->time.seconds = bcd_to_dec(raw[0] & 0x7F);
+    datetime->time.minutes = bcd_to_dec(raw[1] & 0x7F);
+    datetime->time.hours   = bcd_to_dec(raw[2] & 0x3F);
+    datetime->date.weekday = raw[3] & 0x07;
+    datetime->date.day     = bcd_to_dec(raw[4] & 0x3F);
+    datetime->date.month   = bcd_to_dec(raw[5] & 0x1F);
+    datetime->date.year    = bcd_to_dec(raw[6]);
+    return true;
 }
 
 bool ds3231_set_time(ds3231_t *dev, const ds3231_time_t *time) {
@@ -113,8 +124,19 @@ bool ds3231_set_date(ds3231_t *dev, const ds3231_date_t *date) {
 }
 
 bool ds3231_set_datetime(ds3231_t *dev, const ds3231_datetime_t *datetime) {
-    return ds3231_set_date(dev, &datetime->date) &&
-           ds3231_set_time(dev, &datetime->time);
+    // One write starting at seconds: resets the countdown chain once and
+    // cannot straddle a rollover between the date and time registers.
+    uint8_t buf[8] = {
+        DS3231_REG_SECONDS,
+        dec_to_bcd(datetime->time.seconds),
+        dec_to_bcd(datetime->time.minutes),
+        dec_to_bcd(datetime->time.hours),
+        datetime->date.weekday,
+        dec_to_bcd(datetime->date.day),
+        dec_to_bcd(datetime->date.month),
+        dec_to_bcd(datetime->date.year),
+    };
+    return i2c_write_blocking(dev->config.i2c, dev->config.address, buf, 8, false) == 8;
 }
 
 // ============================================================================
